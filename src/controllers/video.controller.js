@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
 import { User } from "../models/user.model";
 import { Video } from "../models/video.model";
-import { uploadOnCloudinary } from "../utils/cloudinary";
+import { uploadOnCloudinar, deleteOnCludinary } from "../utils/cloudinary";
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
@@ -93,7 +93,7 @@ const updateVideo = asyncHandler(async(req,res)=>{
         throw new ApiError(404, "Video not found");
     }
 
-    if(!video?._id.toString() === req.user?._id.toString()){
+    if(!video?.owner.toString() === req.user?._id.toString()){
         throw new ApiError(400, "You can't update video files as you are not owner")
     }
 
@@ -101,7 +101,7 @@ const updateVideo = asyncHandler(async(req,res)=>{
     
     const thumbnail = req.fields?.thumbnail[0].path;
 
-    if(!thumbnailLocalPath){
+    if(!thumbnail){
         throw new ApiError(400, "thumbnail file is required");
     }
 
@@ -136,9 +136,48 @@ const updateVideo = asyncHandler(async(req,res)=>{
         .json(
             new ApiResponse(200, updateVideo, "Video details updates successfully")
         )
+});
+
+const deleteAVideo = asyncHandler(async(req,res)=>{
+    const {videoId} = req.params;
+
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid Video ID");
+    }
+
+    const video = await Video.findById(videoId);
+    
+    if(!video){
+        throw new ApiError(404, "Video not found");
+    }
+
+    if(!video?.owner.toString() === req.user?._id){
+        throw new ApiError(400, "You can't delete video as you are not owner");
+    }
+
+    const deletedVideo = await Video.findByIdAndDelete(videoId);
+
+    if(!deletedVideo){
+        throw new ApiError(404, "failed to delete a video or video not found");
+    }
+
+    await deleteOnCludinary(video.videoFile.public_id, "video")
+    await deleteOnCludinary(video.thumbnail.public_id);
+
+    //TODO: Delete Comments related to VIDEO
+    //TODO: Delete Likes Related To VIDEO
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200,{},"video deleted successfully")
+        )
 })
 
 export {
     getAllVideos,
-    publishAVideo
+    publishAVideo,
+    updateVideo,
+    getVideoByID,
+
 }
