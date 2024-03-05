@@ -7,12 +7,12 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadOnCloudinary = async (localFilePath) =>{
+const uploadOnCloudinary = async (localFilePath) => {
     try {
-        if (!localFilePath)  return null;
+        if (!localFilePath) return null;
         //upload the file on cloudinary
-        const response = await cloudinary.uploader.upload(localFilePath,{
-            resource_type : 'auto'
+        const response = await cloudinary.uploader.upload(localFilePath, {
+            resource_type: 'auto'
         })
 
         //file has been uploaded successfully
@@ -28,4 +28,19 @@ const uploadOnCloudinary = async (localFilePath) =>{
     }
 }
 
-export {uploadOnCloudinary};
+const deleteOnCludinary = async (public_id, resource_type = "image") => {
+    try {
+        if (!public_id) return null;
+        const result = await cloudinary.uploader.destroy(public_id,
+            {
+                resource_type: `${resource_type}`
+            }
+        )
+        return result;
+    } catch (error) {
+        console.log("failed to delete a video : ", error);
+        return error;
+    }
+}
+
+export { uploadOnCloudinary, deleteOnCludinary };
