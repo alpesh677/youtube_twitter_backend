@@ -74,7 +74,6 @@ userSchema.pre("save", async function (next) {          //pre save hook...
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
-
 //Method to generate an access token for a user.
 userSchema.methods.generateAccessToken = function () {
     return jwt.sign(

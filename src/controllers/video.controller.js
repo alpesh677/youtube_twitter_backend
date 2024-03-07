@@ -158,6 +158,36 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoByID = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
+
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(404, "Invalid Video ID");
+    }
+
+    const video = Video.aggregate([
+        {
+            $match:{
+                _id : new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup:{
+                from: "users",
+                foreignField: "_id",
+                localField: "owner",
+                as: "ownerDetails",
+                pipeline:[
+                    {
+                        $lookup:{
+                            from: "subscriptions",
+                            foreignField : "channel",
+                            
+
+                        }
+                    }
+                ]
+            }
+        }
+    ])
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
