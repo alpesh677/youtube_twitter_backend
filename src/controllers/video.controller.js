@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose";
+import mongoose, { Aggregate, isValidObjectId } from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
@@ -12,27 +12,89 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     console.log("user Id :", userId);
 
-    if (!userId)
-        throw new ApiError(404, "Invalid User ID");
-
     const pipeline = [];
+    // NOTE: search the title and description based on query on search-videos index
     if (query) {
         pipeline.push({
             $search: {
                 "index": "search-videos",
                 "text": {
-                    "path": [ "title", "description" ],
+                    "path": ["title", "description"],
                     "query": query
                 }
             }
         });
     }
 
+
+    //NOTE: filter the documents based in userID
+    if (userId) {
+        if (!isValidObjectId(userId))
+            throw new ApiError(404, "Invalid User ID");
+        pipeline.push({
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        })
+    }
+
+
+    //NOTE: give only published videos
     pipeline.push({
-        $match : {
-            
+        $match: {
+            isPublished: true
         }
     })
+
+    //NOTE: sort the documents sortBy is field by which you want to sort and sortType is sort direction
+    if (sortBy && sortType) {
+        pipeline.push({
+            $sort: {   //REVIEW:
+                [sortBy]: sortType === 'asc' ? 1 : -1
+            }
+        })
+    }
+
+
+    //NOTE: if sort is not provided sort the videos on its creation time desc
+    pipeline.push({
+        $sort: {
+            createdAt: -1
+        }
+    })
+
+    pipeline.push({
+        $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "ownerDetails",
+            pipeline: [
+                {
+                    $project: {
+                        username: 1,
+                        avatar: 1,
+                    }
+                }
+            ],
+        }
+    })
+
+    const videoAggregate = Video.aggregate(pipeline);
+
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+    }
+
+    //NOTE: aggregatePaginate returns the promise so it should be await !!!
+    const video = await Video.aggregatePaginate(videoAggregate, options);
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, video, "data fetched successfully"));
+
+
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
