@@ -1,4 +1,4 @@
-import mongoose, {isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -107,9 +107,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description } = req.body
 
-    if (
-        [title, description].some((field) => field?.trim() === "")
-    ) {
+    if ([title, description].some((field) => field?.trim() === "")) {
         throw new ApiResponse(400, "Title and description is required");
     }
 
@@ -126,6 +124,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
     const videoPath = await uploadOnCloudinary(videoLocalPath);
 
+    // console.log("this is thumbnail path",thumbnail);
+    // console.log("this is video path",videoPath);
+
     if (!thumbnail) {
         throw new ApiError(400, "thumbnail file is required")
     }
@@ -134,14 +135,8 @@ const publishAVideo = asyncHandler(async (req, res) => {
     }
 
     const video = await Video.create({
-        videoFile: {
-            url: videoPath.url,
-            public_id: videoPath.public_id
-        },
-        thumbnail: {
-            url: videoPath.url,
-            public_id: videoPath.public_id
-        },
+        videoFile: videoPath.url,
+        thumbnail: thumbnail.url,
         title,
         description,
         duration: videoPath.duration, //REVIEW: partially
@@ -255,13 +250,13 @@ const getVideoByID = asyncHandler(async (req, res) => {
         }
     ]);
 
-    if(!video){
+    if (!video) {
         throw new ApiError(500, "failed to fetch a video")
     }
 
     return res
         .status(200)
-        .json(new ApiResponse(200,video[0],"video detailes fetched succussfully !!"))
+        .json(new ApiResponse(200, video[0], "video detailes fetched succussfully !!"))
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
@@ -288,7 +283,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     }
 
     //const thumbnailToDelete =  //TODO: how can I DELETE It
-
+    console.log(req.files.thumbnail[0])
     const thumbnail = req.files?.thumbnail[0].path;
 
     if (!thumbnail) {
