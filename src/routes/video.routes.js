@@ -1,7 +1,14 @@
 import { Router } from "express";
-import { getAllVideos, publishAVideo } from "../controllers/video.controller";
-import { verifyJWT } from "../middlewares/auth.middlewares";
-import { upload } from "../middlewares/multer.middleware";
+import { 
+    getAllVideos, 
+    publishAVideo,
+    getVideoByID,
+    updateVideo,
+    deleteAVideo,
+    togglePublishStatus
+} from "../controllers/video.controller.js";
+import { verifyJWT } from "../middlewares/auth.middlewares.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 router.use(verifyJWT)
@@ -26,8 +33,8 @@ router
 
 router
     .route("/:videoId")
-    .get(getVideoById)
-    .delete(deleteVideo)
+    .get(getVideoByID)
+    .delete(deleteAVideo)
     .patch(upload.single("thumbnail"), updateVideo);
 
 router.route("/toggle/publish/:videoId").patch(togglePublishStatus);

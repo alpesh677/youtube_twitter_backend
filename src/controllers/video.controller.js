@@ -1,10 +1,10 @@
-import mongoose, { Aggregate, isValidObjectId } from "mongoose";
-import { asyncHandler } from "../utils/asyncHandler";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import { User } from "../models/user.model";
-import { Video } from "../models/video.model";
-import { uploadOnCloudinar, deleteOnCludinary } from "../utils/cloudinary";
+import mongoose, {isValidObjectId } from "mongoose";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { User } from "../models/user.model.js";
+import { Video } from "../models/video.model.js";
+import { uploadOnCloudinary, deleteOnCludinary } from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
@@ -77,8 +77,15 @@ const getAllVideos = asyncHandler(async (req, res) => {
                     }
                 }
             ],
+        },
+    },
+        {
+            $unwind: {
+                path: "$ownerDetails"
+            }
         }
-    })
+
+    )
 
     const videoAggregate = Video.aggregate(pipeline);
 
@@ -106,7 +113,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
         throw new ApiResponse(400, "Title and description is required");
     }
 
-    const thumbnailLocalPath = req.fields?.thumbnail[0].path;
+    const thumbnailLocalPath = req.files?.thumbnail[0].path;
     const videoLocalPath = req.files?.videoFile[0].path;
 
     if (!thumbnailLocalPath) {
@@ -159,35 +166,102 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoByID = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
 
-    if(!isValidObjectId(videoId)){
+    if (!isValidObjectId(videoId)) {
         throw new ApiError(404, "Invalid Video ID");
     }
 
     const video = Video.aggregate([
         {
-            $match:{
-                _id : new mongoose.Types.ObjectId(videoId)
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
             }
         },
         {
-            $lookup:{
+            $lookup: {
+                from: "likes",
+                foreignField: "video",
+                localField: "_id",
+                as: "likes"
+            }
+        },
+        {
+            $lookup: {
                 from: "users",
                 foreignField: "_id",
                 localField: "owner",
                 as: "ownerDetails",
-                pipeline:[
+                pipeline: [
                     {
-                        $lookup:{
+                        $lookup: {
                             from: "subscriptions",
-                            foreignField : "channel",
-                            
-
+                            foreignField: "channel",
+                            localField: "_id",
+                            as: "subscribers"
+                        }
+                    },
+                    {
+                        $addFields: {
+                            totalSubscribers: {
+                                $size: "$subscribers"
+                            },
+                            isSubscribed: {
+                                $cond: {
+                                    if: { $in: [req.user?.id, "$subscribers.subscriber"] },
+                                    then: true,
+                                    else: false
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $project: {
+                            username: 1,
+                            avatar: 1,
+                            totalSubscribers: 1,
+                            isSubscribed: 1,
                         }
                     }
                 ]
             }
+        },
+        {
+            $addFields: {
+                owner: {
+                    $first: "$ownerDetails"
+                },
+                isLiked: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$likes.likedBy"] },
+                        then: true,
+                        else: false
+                    }
+                },
+                likeCount: {
+                    $size: "$likes",
+                }
+            }
+        },
+        {
+            $project: {
+                videoFile: 1,
+                title: 1,
+                description: 1,
+                duration: 1,
+                views: 1,
+                owner: 1,
+                isLiked: 1,
+                likeCount: 1,
+            }
         }
-    ])
+    ]);
+
+    if(!video){
+        throw new ApiError(500, "failed to fetch a video")
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200,video[0],"video detailes fetched succussfully !!"))
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
@@ -215,7 +289,7 @@ const updateVideo = asyncHandler(async (req, res) => {
 
     //const thumbnailToDelete =  //TODO: how can I DELETE It
 
-    const thumbnail = req.fields?.thumbnail[0].path;
+    const thumbnail = req.files?.thumbnail[0].path;
 
     if (!thumbnail) {
         throw new ApiError(400, "thumbnail file is required");
@@ -254,7 +328,6 @@ const updateVideo = asyncHandler(async (req, res) => {
         )
 });
 
-
 const deleteAVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
 
@@ -268,7 +341,7 @@ const deleteAVideo = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not found");
     }
 
-    if (!video?.owner.toString() !== req.user?._id) {
+    if (!video?.owner.toString() !== req.user._id) {
         throw new ApiError(400, "You can't delete video as you are not owner");
     }
 
@@ -290,7 +363,6 @@ const deleteAVideo = asyncHandler(async (req, res) => {
             new ApiResponse(200, {}, "video deleted successfully")
         )
 })
-
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
