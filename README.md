@@ -68,7 +68,7 @@ Model : [click here ](https://app.eraser.io/workspace/3bPSxd4BPttn9GoAeech)
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/Hruthik-28/youtube-twitter.git
+    https://github.com/alpesh677/youtube_twitter_backend.git
     ```
 
 2. **Install dependencies:**
