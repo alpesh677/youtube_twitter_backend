@@ -6,6 +6,8 @@ const videoSchema = new Schema({
         type: {
             url: String,
             public_id : String,
+            w : Number,
+            h : Number
         },      //cloudinaary url
         required: true
     },

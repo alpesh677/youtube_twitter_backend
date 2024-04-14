@@ -113,9 +113,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
         throw new ApiResponse(400, "Title and description is required");
     }
 
-    console.log(req.files?.thumbnail[0]);
-    const thumbnailLocalPath = req.files?.thumbnail[0].path;
-    const videoLocalPath = req.files?.videoFile[0].path;
+    // console.log(req.files?.thumbnail[0]);
+    const thumbnailLocalPath = req?.files?.thumbnail[0].path;
+    const videoLocalPath = req?.files?.videoFile[0].path;
 
     if (!thumbnailLocalPath) {
         throw new ApiError(400, "thumbnail file is required");
@@ -137,7 +137,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const video = await Video.create({
         videoFile: {
             url: videoPath.url,
-            public_id: videoPath.public_id
+            public_id: videoPath.public_id,
+            w: videoPath.width,
+            h: videoPath.height
         },
         thumbnail: {
             url: videoPath.url,
@@ -220,7 +222,7 @@ const getVideoByID = asyncHandler(async (req, res) => {
                     {
                         $project: {
                             username: 1,
-                            "avatar.url": 1,
+                            avatar: 1,
                             totalSubscribers: 1,
                             isSubscribed: 1,
                         }
@@ -248,6 +250,9 @@ const getVideoByID = asyncHandler(async (req, res) => {
         {
             $project: {
                 "videoFile.url": 1,
+                "videoFile.w": 1,
+                "videoFile.h": 1,
+                "thumbnail.url" : 1,
                 title: 1,
                 description: 1,
                 duration: 1,
@@ -255,6 +260,7 @@ const getVideoByID = asyncHandler(async (req, res) => {
                 owner: 1,
                 isLiked: 1,
                 likeCount: 1,
+                createdAt : 1
             }
         }
     ]);
@@ -404,7 +410,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not Found");
     }
 
-    if (video?.owner.toString() !== req.user?._id.toString()) {
+    if (video?.owner.toString() !== req?.user?._id.toString()) {
         throw new ApiError(400, "You can't update video status as you are not owner")
     }
 
