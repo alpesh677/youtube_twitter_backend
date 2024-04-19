@@ -103,8 +103,8 @@ const publishAVideo = asyncHandler(async (req, res) => {
   if ([title, description].some((field) => field?.trim() === "")) {
     throw new ApiResponse(400, "Title and description is required");
   }
-  const thumbnailLocalPath = req?.files?.thumbnail[0].path;
-  const videoLocalPath = req?.files?.videoFile[0].path;
+  // const thumbnailLocalPath = req?.files?.thumbnail[0].path;
+  // const videoLocalPath = req?.files?.videoFile[0].path;
     if (
         [title, description].some((field) => field?.trim() === "")
     ) {
