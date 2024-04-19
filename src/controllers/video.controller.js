@@ -105,6 +105,15 @@ const publishAVideo = asyncHandler(async (req, res) => {
   }
   const thumbnailLocalPath = req?.files?.thumbnail[0].path;
   const videoLocalPath = req?.files?.videoFile[0].path;
+    if (
+        [title, description].some((field) => field?.trim() === "")
+    ) {
+        throw new ApiResponse(400, "Title and description is required");
+    }
+
+    // console.log(req.files?.thumbnail[0]);
+    const thumbnailLocalPath = req?.files?.thumbnail[0].path;
+    const videoLocalPath = req?.files?.videoFile[0].path;
 
   if (!thumbnailLocalPath) {
     throw new ApiError(400, "thumbnail file is required");
@@ -123,21 +132,23 @@ const publishAVideo = asyncHandler(async (req, res) => {
     throw new ApiError(400, "video file is required");
   }
 
-  const video = await Video.create({
-    videoFile: {
-      url: videoPath.url,
-      public_id: videoPath.public_id,
-    },
-    thumbnail: {
-      url: thumbnail.url,
-      public_id: thumbnail.public_id,
-    },
-    title,
-    description,
-    duration: videoPath.duration, //REVIEW: partially
-    isPublished: false,
-    owner: req.user?._id,
-  });
+    const video = await Video.create({
+        videoFile: {
+            url: videoPath.url,
+            public_id: videoPath.public_id,
+            w: videoPath.width,
+            h: videoPath.height
+        },
+        thumbnail: {
+            url: videoPath.url,
+            public_id: videoPath.public_id
+        },
+        title,
+        description,
+        duration: videoPath.duration, //REVIEW: partially
+        isPublished: false,
+        owner: req.user?._id
+    });
 
   const videoUpload = await Video.findById(video._id);
 
@@ -383,12 +394,9 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Video not Found");
   }
 
-  if (video?.owner.toString() !== req.user?._id.toString()) {
-    throw new ApiError(
-      400,
-      "You can't update video status as you are not owner"
-    );
-  }
+    if (video?.owner.toString() !== req?.user?._id.toString()) {
+        throw new ApiError(400, "You can't update video status as you are not owner")
+    }
 
   const toggleStatus = await Video.findByIdAndUpdate(
     videoId,

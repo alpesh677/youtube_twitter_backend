@@ -4,10 +4,24 @@
   "description": "high level backend project",
   "main": "index.js",
   "type": "module",
+<<<<<<< HEAD
+  "scripts": {
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js",
+    "start": "node src/index.js"
+=======
+  "engines": {
+    "node": "16.x"
+>>>>>>> a44ae5b1c689c16a7f0b5d80c5f434cc4f72cf04
+  },
   "scripts": {
     "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js",
     "start": "node src/index.js"
   },
+  "keywords": [
+    "javascript",
+    "backend",
+    "chai"
+  ],
   "author": "alpesh baria",
   "license": "ISC",
   "devDependencies": {
