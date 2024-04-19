@@ -20,7 +20,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
         return { accessToken, refreshToken };
     } catch (error) {
-        console.log("userid in method : ", userId)
+
         console.log(error)
         throw new ApiError(500, "Something went wrong while generating refresh and access tokens")
     }
@@ -70,8 +70,6 @@ const registerUser = asyncHandler(async (req, res) => {
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files.coverImage[0].path
     }
-    // console.log(`this is avatarlocal path ${avatarLocalPath}`);
-    // console.log(`this is coverimage local path ${coverImageLocalPath}`);
 
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is required")
@@ -116,8 +114,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
     //step 1 
     const { email, username, password } = req.body
-    // console.log(email)
-    // console.log(username)
     if (!(username || email)) {
         throw new ApiError(400, "username or email is required");
     }
@@ -126,22 +122,18 @@ const loginUser = asyncHandler(async (req, res) => {
         $or: [{ email }, { username }]
     })
 
-    console.log(user)
-
     if (!user) {
         throw new ApiError(404, "User does not exist");
     }
 
     const isPasswordValid = await user.isPasswordCorrect(password)
-    // console.log(isPasswordValid)
 
     if (!isPasswordValid) {
         throw new ApiError(401, "Invalid user credentials");
     }
 
-    // console.log(user._id)
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
-    // console.log(accessToken)
+    // (accessToken)
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
@@ -279,7 +271,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {  //different con
         },
         { new: true }
     ).select("-password")
-    console.log(user);
+    // console.log(user);
     return res
         .status(200)
         .json(new ApiResponse(200, user, "Account details are updated"))
@@ -339,7 +331,6 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
     const { username } = req.params
-    console.log(username)
 
     if (!username?.trim()) {
         throw new ApiError(400, "username is missing");

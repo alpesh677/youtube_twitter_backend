@@ -135,7 +135,6 @@ const updateComment = asyncHandler(async (req, res) => {
         { new: true }
     )
 
-    // console.log("this is updated comment : ",updatedComment)
 
     if (!updatedComment)
         throw new ApiError(500, "can't update the comment");
