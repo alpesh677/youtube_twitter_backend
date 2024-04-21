@@ -4,8 +4,9 @@
 
 This is a ``YOUTUBE + TWITTER`` backend project that brings together everything you love about YouTube and Twitter. You can share videos and tweet all in one place. This guide will help you learn more about what our project does.
 
-## Important link
+## Important links
 Model : [click here ](https://app.eraser.io/workspace/3bPSxd4BPttn9GoAeech)
+API Documentation : [click here](https://documenter.getpostman.com/view/33070729/2sA3BobXen)
 
 ## Features
 
